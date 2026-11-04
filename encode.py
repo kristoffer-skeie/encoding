@@ -1,6 +1,6 @@
 # Simple UI for gap encoding a list of numbers and then encoding the gaps
 # with Elias gamma, variable byte or Simple-9.
-# Run with:  python enode.py
+# Run with:  python encode.py
 
 import importlib.util
 import os
@@ -49,8 +49,35 @@ def encode():
 
         total = sum(len(c.replace(" ", "")) for c in codes)
         output.insert(tk.END, "\nTotal bits: " + str(total) + "\n")
+
+        # put the encoded bits in the decode box so they can be decoded
+        decode_entry.delete(0, tk.END)
+        decode_entry.insert(0, " ".join(codes))
     except ValueError as error:
         output.insert(tk.END, "Error: " + str(error) + "\n")
+
+
+def decode():
+    decode_output.delete("1.0", tk.END)
+    try:
+        bits = decode_entry.get().replace(" ", "")
+        for b in bits:
+            if b != "0" and b != "1":
+                raise ValueError("Only 0 and 1 are allowed, got '" + b + "'")
+
+        method = choice.get()
+        if method == "Elias gamma":
+            gaps = gamma.elias_gamma_decode(bits)
+        elif method == "Variable byte":
+            gaps = vbyte.var_byte_decode(bits)
+        else:
+            gaps = s9.simple9_decode(bits)
+
+        numbers = gap.gap_decode(gaps)
+        decode_output.insert(tk.END, "Gaps:     " + str(gaps) + "\n")
+        decode_output.insert(tk.END, "Numbers:  " + str(numbers) + "\n")
+    except ValueError as error:
+        decode_output.insert(tk.END, "Error: " + str(error) + "\n")
 
 
 window = tk.Tk()
@@ -69,7 +96,17 @@ for name in ["Elias gamma", "Variable byte", "Simple-9"]:
 
 tk.Button(window, text="Encode", command=encode).pack(padx=10, pady=5, anchor="w")
 
-output = tk.Text(window, width=70, height=20, font=("Courier", 10))
+output = tk.Text(window, width=70, height=14, font=("Courier", 10))
 output.pack(padx=10, pady=(0, 10), fill="both", expand=True)
+
+# ----- decode section -----
+tk.Label(window, text="Bits to decode (spaces are ignored):").pack(anchor="w", padx=10)
+decode_entry = tk.Entry(window, width=60, font=("Courier", 10))
+decode_entry.pack(padx=10, pady=5, fill="x")
+
+tk.Button(window, text="Decode", command=decode).pack(padx=10, pady=5, anchor="w")
+
+decode_output = tk.Text(window, width=70, height=5, font=("Courier", 10))
+decode_output.pack(padx=10, pady=(0, 10), fill="both", expand=True)
 
 window.mainloop()

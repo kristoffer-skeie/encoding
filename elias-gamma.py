@@ -27,10 +27,12 @@ def elias_gamma_decode(bits):
     i = 0
     while i < len(bits):
         length = 0
-        while bits[i] == "1":
+        while i < len(bits) and bits[i] == "1":
             length += 1
             i += 1
-        i += 1                      # skip the 0 that ends the unary part
+        if i == len(bits):
+            raise ValueError("Bit string ended in the middle of a code")
+        i += 1                     # skip the 0 that ends the unary part
         offset = bits[i:i + length]
         if len(offset) < length:
             raise ValueError("Bit string ended in the middle of a code")
